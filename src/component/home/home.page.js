@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import React from 'react';
+import { predictInceptionV3, predictXception, uploadToCloudinary } from "./home.controller.js";
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
     const [modelSelected, setSelectedModel] = useState(0);
@@ -7,6 +9,8 @@ const Home = () => {
     const [selectedFile, setSelectedFile] = useState(null);
 
     const fileInputRef = useRef(null);
+
+    const navigate = useNavigate();
 
     const toggleButton = (id) => {
         setSelectedModel(id);
@@ -22,7 +26,32 @@ const Home = () => {
         fileInputRef.current.click();
     };
 
-    console.log(modelSelected)
+    const handleUploadButton = async () => {
+        const uploadResponse = await uploadToCloudinary(selectedFile);
+        // console.log(uploadResponse.secure_url)
+        if (modelSelected === 1) {
+            const response = await predictInceptionV3(uploadResponse.secure_url)
+            .then(res => {
+                navigate('/result', { state: res.data });
+            })
+            .catch(err => {
+                console.log(err);
+            })
+        }
+        else if (modelSelected === 2) {
+            const response = await predictXception(uploadResponse.secure_url)
+            .then(res => {
+                navigate('/result', { state: res.data });
+            })
+            .catch(err => {
+                console.log(err);
+            })
+        }
+        
+        // navigate('/result');
+    }
+
+    // console.log(modelSelected)
 
     return (
         <div class="h-screen justify-center px-6 py-12 lg:px-8 bg-gray-800">
@@ -92,7 +121,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="pt-3 px-12 pb-12">
-                            <button className="bg-transparent hover:bg-white hover:text-gray-800 text-white font-bold py-2 px-4 rounded-xl w-full border-solid border-2 border-white">
+                            <button onClick={() => handleUploadButton()} className="bg-transparent hover:bg-white hover:text-gray-800 text-white font-bold py-2 px-4 rounded-xl w-full border-solid border-2 border-white">
                                 Grade It!
                             </button>
                         </div>
